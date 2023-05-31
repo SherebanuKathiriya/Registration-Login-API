@@ -1,8 +1,7 @@
 package com.sherebanu.springboot.service;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
@@ -12,7 +11,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.sherebanu.springboot.model.Role;
 import com.sherebanu.springboot.model.User;
 import com.sherebanu.springboot.repository.UserRepository;
 import com.sherebanu.springboot.web.dto.UserRegistrationDto;
@@ -42,8 +40,7 @@ public class UserServiceImpl implements UserService{
 				dto.getEmail(), 
 				dto.getDob(), 
 				dto.getUsername(), 
-				passEncoder.encode(dto.getPassword()), 
-				Arrays.asList(new Role("ROLE_USER")));
+				passEncoder.encode(dto.getPassword())); 
 		return repo.save(user);
 	}
 
@@ -54,13 +51,15 @@ public class UserServiceImpl implements UserService{
 		if(user == null) {
 			throw new UsernameNotFoundException("Invalid username or password.");
 		}
-		return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), mapRolesToAuthorities(user.getRoles()));		
+		List<GrantedAuthority> authorities = new ArrayList<>();
+	    authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+
+	    return new org.springframework.security.core.userdetails.User(
+	            user.getUsername(),
+	            user.getPassword(),
+	            authorities);		
 	}
 	
-	private Collection<? extends GrantedAuthority> mapRolesToAuthorities(Collection<Role> roles){
-		return roles.stream().map(role -> new SimpleGrantedAuthority(role.getName())).collect(Collectors.toList());
-	}
-
 	@Override
 	public BCryptPasswordEncoder getpassEncoder() {
 		return passEncoder;
